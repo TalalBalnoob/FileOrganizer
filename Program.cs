@@ -1,0 +1,48 @@
+﻿// See https://aka.ms/new-console-template for more information
+
+
+using FileOrganizer.classes;
+
+Console.WriteLine("What Folder to scan:");
+var folderPath = Console.ReadLine();
+
+if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
+{
+	Console.WriteLine("Invalid folder path.");
+	return;
+}
+
+var files = Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly).ToList()[1..];
+
+var groupedFiles = files.GroupBy(f => Path.GetExtension(f).ToLower())
+	.Select(g => new
+	{
+		Extension = g.Key,
+		Count = g.Count(),
+		files = g.ToList(),
+		TotalSize = g.Sum(f => new FileInfo(f).Length),
+		category = Category.GetCategory(g.Key.ToLower())
+	}).OrderByDescending(u => u.TotalSize)
+	.ToList();
+
+
+foreach (var group in groupedFiles)
+{
+	if (group.category == "NONE") continue;
+	//check if dir exists 
+	if (!Directory.Exists(group.category)) Directory.CreateDirectory($"{folderPath}/{group.category}");
+
+	group.files.ForEach(f =>
+	{
+		var newFileName = f.Split(folderPath)[1];
+		try
+		{
+			File.Move(f, $"{folderPath}/{group.category}{newFileName}");
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error moving file {f}: {ex.Message}");
+		}
+		Console.WriteLine($"Moved {f} to {folderPath}/{group.category}{newFileName}");
+	});
+}
