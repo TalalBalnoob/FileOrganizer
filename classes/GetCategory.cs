@@ -4,7 +4,6 @@ namespace FileOrganizer.classes;
 
 public class Category
 {
-    // this is a change 
     public static string GetCategory(string extension)
     {
         return extension switch
